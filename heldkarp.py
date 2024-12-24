@@ -1,7 +1,7 @@
 def held_karp_tsp(distance):
     """
     Solve the Traveling Salesman Problem (TSP) using the Held-Karp algorithm.
-    :param distance: A 2D list representing the distance matrix.
+    : distance: A 2D list representing the distance matrix.
     :return: The minimum cost to complete the TSP.
     """
     INF = float('inf')  # Define infinity
