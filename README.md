@@ -2,6 +2,7 @@
 
 <br><b> Algorithm 1: Held Karp Algorithm </b>
 <br>3 key concepts in code: INF(Infinity), DP (Dynamic Programming Table) & Mask
+<br>Use 2 different programming language : JAVA & Python
 <br>
 <br><b> Algorithm 2: Nearest Neighbour Algorithm </b>
 
