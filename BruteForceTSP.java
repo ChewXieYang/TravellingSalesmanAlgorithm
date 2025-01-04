@@ -46,6 +46,9 @@ public class BruteForceTSP {
         List<Integer> bestRoute = null;
         List<Integer> worstRoute = null;
 
+        // Start timing the computation
+        long startTime = System.nanoTime();
+
         // Iterate through all possible routes and calculate their cost
         System.out.println("Evaluating all possible routes:");
         for (List<Integer> route : permutations) {
@@ -79,6 +82,12 @@ public class BruteForceTSP {
             }
         }
 
+        // Stop timing the computation
+        long endTime = System.nanoTime();
+
+        // Calculate the elapsed time in milliseconds
+        double elapsedTime = (endTime - startTime) / 1_000_000.0;
+
         // Best route and cost
         if (bestRoute != null) {
             System.out.print("\nBest Route: ");
@@ -102,6 +111,8 @@ public class BruteForceTSP {
             }
             System.out.printf("\nMaximum Cost: %.2f\n", maxCost);
         }
+        // Time taken
+        System.out.printf("\nComputation Time: %.2f milliseconds\n", elapsedTime);
     }
 
     public static void main(String[] args) {
