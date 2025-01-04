@@ -1,4 +1,5 @@
 import itertools
+import time
 
 def calculate_cost(graph, route):
     """Calculate the cost of a given route."""
@@ -24,6 +25,9 @@ def solve_tsp(graph, city_names):
 
     print("Evaluating all possible routes:")
 
+    #Timer starts
+    start_time = time.perf_counter()
+
     for route in permutations:
         full_route = [0] + list(route) + [0]  # Include the starting and ending city
         cost = calculate_cost(graph, full_route)
@@ -41,6 +45,10 @@ def solve_tsp(graph, city_names):
         if cost > max_cost:
             max_cost = cost
             worst_route = full_route
+    
+    # Timer Ends
+    end_time = time.perf_counter()
+    elapsed_time = end_time - start_time
 
     # Print best route and cost
     if best_route:
@@ -51,6 +59,9 @@ def solve_tsp(graph, city_names):
     if worst_route:
         worst_route_str = " -> ".join(city_names[city] for city in worst_route)
         print(f"\nWorst Route: {worst_route_str}\nMaximum Cost: {max_cost:.2f}")
+  
+    #Elapsed time print
+    print(f"\nTime taken to evaluate routes: {elapsed_time:.6f} seconds")
 
 if __name__ == "__main__":
     # Example graph (distance matrix)
