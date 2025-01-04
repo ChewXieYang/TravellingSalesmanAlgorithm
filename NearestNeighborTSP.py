@@ -1,19 +1,19 @@
-import time
-
-def nearest_neighbor_algorithm(fu_matrix, start_city=0):
+def nearest_neighbor_algorithm(fu_matrix, start_city):
     """
     Nearest Neighbor Algorithm for the Traveling Salesman Problem (TSP).
-    Runs the algorithm starting from a specific city.
+    Calculates the route and total fuel consumption starting from a given city.
 
     Parameters
     ----------
-    fu_matrix : 2D list or numpy array
+    fu_matrix : 2D list
         A matrix of fuel consumption between cities.
     start_city : int
-        The starting city index (default is 0).
+        The index of the starting city.
 
     Returns
     -------
+    route : list
+        The sequence of visited cities in the route.
     total_fu : float
         The total fuel consumption for the entire tour.
     """
@@ -25,8 +25,9 @@ def nearest_neighbor_algorithm(fu_matrix, start_city=0):
     current_city = start_city
     total_fu = 0
     visited[current_city] = True
+    route = [city_names[current_city]]
 
-    # Iterate over all cities (except the first one)
+    # Visit all cities
     for _ in range(1, n):
         min_fu = float('inf')
         next_city = -1
@@ -37,56 +38,79 @@ def nearest_neighbor_algorithm(fu_matrix, start_city=0):
 
         total_fu += min_fu
         visited[next_city] = True
+        route.append(city_names[next_city])
         current_city = next_city
 
-    # The last move is to return to the starting city
+    # Return to the starting city
     total_fu += fu_matrix[current_city][start_city]
-    return total_fu
+    route.append(city_names[start_city])
+
+    return route, total_fu
 
 
-def analyze_algorithm(fu_matrix):
+def evaluate_all_routes(fu_matrix):
     """
-    Analyze the Nearest Neighbor Algorithm by calculating the best case, worst case,
-    and execution time for all possible starting cities.
+    Evaluate all possible Nearest Neighbor routes starting from each city.
+
+    This function takes a 2D list of fuel consumption between cities and
+    evaluates all possible Nearest Neighbor routes starting from each city.
+    The best and worst routes are determined and printed to the console,
+    together with the computation time.
 
     Parameters
     ----------
-    fu_matrix : 2D list or numpy array
+    fu_matrix : 2D list
         A matrix of fuel consumption between cities.
 
     Returns
     -------
-    results : dict
-        Contains best case, worst case, and elapsed time for execution.
+    None
     """
-    n = len(fu_matrix)
-    best_case = float('inf')
-    worst_case = float('-inf')
-    best_city = -1
-    worst_city = -1
+    # Get the names of the cities
+    city_names = ["Sarajevo", "Zagreb", "Skopje", "Podgorica", "Belgrade"]
 
+    # Get the number of cities
+    n = len(fu_matrix)
+
+    # Initialize the best and worst routes
+    best_route = None
+    best_cost = float('inf')
+    worst_route = None
+    worst_cost = float('-inf')
+
+    # Print a message indicating that we are about to evaluate all possible routes
+    print("Evaluating all possible routes:")
+
+    # Measure computation time
+    import time
     start_time = time.time()
 
+    # Iterate over all cities as the starting city
     for start_city in range(n):
-        total_fu = nearest_neighbor_algorithm(fu_matrix, start_city=start_city)
-        if total_fu < best_case:
-            best_case = total_fu
-            best_city = start_city
-        if total_fu > worst_case:
-            worst_case = total_fu
-            worst_city = start_city
+        # Evaluate the route and get the total fuel consumption
+        route, total_fu = nearest_neighbor_algorithm(fu_matrix, start_city)
 
+        # Print the route and cost
+        print(f"Route: {' -> '.join(route)} | Cost: {total_fu:.2f}")
+
+        # Update the best and worst routes
+        if total_fu < best_cost:
+            best_cost = total_fu
+            best_route = route
+        if total_fu > worst_cost:
+            worst_cost = total_fu
+            worst_route = route
+
+    # Measure computation time
     end_time = time.time()
-    elapsed_time = end_time - start_time
+    computation_time = (end_time - start_time) * 1000  # Convert to milliseconds
 
-    results = {
-        "best_case": best_case,
-        "best_city": best_city,
-        "worst_case": worst_case,
-        "worst_city": worst_city,
-        "elapsed_time": elapsed_time
-    }
-    return results
+    # Print results
+    print("\nBest Route: " + " -> ".join(best_route))
+    print(f"Minimum Cost: {best_cost:.2f}")
+    print("\nWorst Route: " + " -> ".join(worst_route))
+    print(f"Maximum Cost: {worst_cost:.2f}")
+    print(f"\nComputation Time: {computation_time:.2f} milliseconds")
 
 
 # FU matrix for 5 cities (Sarajevo, Zagreb, etc.)
@@ -98,8 +122,5 @@ fu_matrix = [
     [2.98, 3.96, 4.32, 4.48, 0]
 ]
 
-results = analyze_algorithm(fu_matrix)
-
-print(f"Best Case: {results['best_case']:.2f} (Starting at city {results['best_city']})")
-print(f"Worst Case: {results['worst_case']:.2f} (Starting at city {results['worst_city']})")
-print(f"Time Elapsed: {results['elapsed_time']:.4f} seconds")
+# Evaluate all Nearest Neighbor routes
+evaluate_all_routes(fu_matrix)
