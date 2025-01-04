@@ -1,62 +1,93 @@
-def nearest_neighbor_algorithm(fu_matrix):
+import time
+
+def nearest_neighbor_algorithm(fu_matrix, start_city=0):
     """
     Nearest Neighbor Algorithm for the Traveling Salesman Problem (TSP).
-
-    Given a matrix of fuel consumption between cities, this algorithm visits each
-    city once and returns to the starting city. The algorithm starts at an
-    arbitrary city and at each step, moves to the nearest unvisited city, until
-    all cities have been visited.
+    Runs the algorithm starting from a specific city.
 
     Parameters
     ----------
     fu_matrix : 2D list or numpy array
-        A matrix of fuel consumption between cities, where fu_matrix[i][j]
-        represents the fuel consumption when traveling from city i to city j.
+        A matrix of fuel consumption between cities.
+    start_city : int
+        The starting city index (default is 0).
 
     Returns
     -------
     total_fu : float
         The total fuel consumption for the entire tour.
-
     """
-    
     # City names corresponding to the indices in the FU matrix
     city_names = ["Sarajevo", "Zagreb", "Skopje", "Podgorica", "Belgrade"]
 
     n = len(fu_matrix)
     visited = [False] * n
-    current_city = 0
+    current_city = start_city
     total_fu = 0
     visited[current_city] = True
-
-    print(f"Starting at city: {city_names[current_city]}")
 
     # Iterate over all cities (except the first one)
     for _ in range(1, n):
         min_fu = float('inf')
         next_city = -1
         for j in range(n):
-            # Check if the city has not been visited before and if the fuel
-            # consumption between the current city and the next city is lower
-            # than the current minimum fuel consumption
             if not visited[j] and fu_matrix[current_city][j] < min_fu:
                 min_fu = fu_matrix[current_city][j]
                 next_city = j
-        
-        # Debugging output for each step
-        print(f"Current city: {city_names[current_city]}")
-        print(f"Nearest unvisited city: {city_names[next_city]}")
-        print(f"Fuel consumption for this move: {min_fu:.2f}")
 
         total_fu += min_fu
         visited[next_city] = True
         current_city = next_city
 
     # The last move is to return to the starting city
-    total_fu += fu_matrix[current_city][0]
-    print(f"Returning from city {city_names[current_city]} to city {city_names[0]} (Fuel Consumption: {fu_matrix[current_city][0]:.2f})")
-
+    total_fu += fu_matrix[current_city][start_city]
     return total_fu
+
+
+def analyze_algorithm(fu_matrix):
+    """
+    Analyze the Nearest Neighbor Algorithm by calculating the best case, worst case,
+    and execution time for all possible starting cities.
+
+    Parameters
+    ----------
+    fu_matrix : 2D list or numpy array
+        A matrix of fuel consumption between cities.
+
+    Returns
+    -------
+    results : dict
+        Contains best case, worst case, and elapsed time for execution.
+    """
+    n = len(fu_matrix)
+    best_case = float('inf')
+    worst_case = float('-inf')
+    best_city = -1
+    worst_city = -1
+
+    start_time = time.time()
+
+    for start_city in range(n):
+        total_fu = nearest_neighbor_algorithm(fu_matrix, start_city=start_city)
+        if total_fu < best_case:
+            best_case = total_fu
+            best_city = start_city
+        if total_fu > worst_case:
+            worst_case = total_fu
+            worst_city = start_city
+
+    end_time = time.time()
+    elapsed_time = end_time - start_time
+
+    results = {
+        "best_case": best_case,
+        "best_city": best_city,
+        "worst_case": worst_case,
+        "worst_city": worst_city,
+        "elapsed_time": elapsed_time
+    }
+    return results
+
 
 # FU matrix for 5 cities (Sarajevo, Zagreb, etc.)
 fu_matrix = [
@@ -67,5 +98,8 @@ fu_matrix = [
     [2.98, 3.96, 4.32, 4.48, 0]
 ]
 
-total_fu = nearest_neighbor_algorithm(fu_matrix)
-print(f"Total Fuel Usage (FU): {total_fu:.2f}")
+results = analyze_algorithm(fu_matrix)
+
+print(f"Best Case: {results['best_case']:.2f} (Starting at city {results['best_city']})")
+print(f"Worst Case: {results['worst_case']:.2f} (Starting at city {results['worst_city']})")
+print(f"Time Elapsed: {results['elapsed_time']:.4f} seconds")
