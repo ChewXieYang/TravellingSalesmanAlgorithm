@@ -1,84 +1,103 @@
-import java.util.Arrays;
+import java.util.ArrayList;
 
 public class NearestNeighborTSP {
 
+    /**
+     * This program evaluates all possible routes for the Traveling Salesman Problem (TSP) and
+     * prints out the best and worst routes found along with their costs. It also records the
+     * time taken to complete the computation.
+     * 
+     * @author Anushka
+     * @version 1.0
+     * @since 2020-11-11
+     */
     public static void main(String[] args) {
-        // Create a matrix representing the fuel consumption between each pair of cities
-        double[][] fuMatrix = {
-            {0, 4.04, 6.41, 2.44, 2.98}, // Sarajevo
-            {4.04, 0, 8.27, 7.15, 3.96}, // Zagreb
-            {6.41, 8.27, 0, 3.33, 4.32}, // Skopje
-            {2.44, 7.15, 3.33, 0, 4.48}, // Podgorica
-            {2.98, 3.96, 4.32, 4.48, 0}   // Belgrade
-        };
+    // Fuel consumption matrix representing distances between cities
+    double[][] fuMatrix = {
+        {0, 4.04, 6.41, 2.44, 2.98}, // Sarajevo
+        {4.04, 0, 8.27, 7.15, 3.96}, // Zagreb
+        {6.41, 8.27, 0, 3.33, 4.32}, // Skopje
+        {2.44, 7.15, 3.33, 0, 4.48}, // Podgorica
+        {2.98, 3.96, 4.32, 4.48, 0}   // Belgrade
+    };
 
-        // Define the names of the cities, corresponding to the indices of the FU matrix
-        String[] cityNames = {"Sarajevo", "Zagreb", "Skopje", "Podgorica", "Belgrade"};
-        int n = fuMatrix.length; // Number of cities
+    // Array of city names corresponding to the indices in fuMatrix
+    String[] cityNames = {"Sarajevo", "Zagreb", "Skopje", "Podgorica", "Belgrade"};
+    int n = cityNames.length; // Total number of cities
 
-        double bestCase = Double.MAX_VALUE;
-        double worstCase = Double.MIN_VALUE;
-        double[] fuelUsages = new double[n];
-        int bestStartCity = -1;
-        int worstStartCity = -1;
+    // Variables to keep track of the minimum and maximum fuel costs found
+    double minCost = Double.MAX_VALUE;
+    double maxCost = Double.MIN_VALUE;
+    
+    // Variables to store the best and worst routes found
+    ArrayList<String> bestRoute = null;
+    ArrayList<String> worstRoute = null;
 
-        // Measure start time
-        long startTime = System.nanoTime();
+    // Record the start time of the computation
+    long startTime = System.nanoTime();
 
-        // Loop through all possible starting cities
-        for (int startCity = 0; startCity < n; startCity++) {
-            boolean[] visited = new boolean[n]; // Reset visited array
-            int currentCity = startCity; // Set current city to the start city
-            double totalFU = 0; // Initialize total fuel consumption
-            visited[currentCity] = true; // Mark the starting city as visited
+    System.out.println("Evaluating all possible routes:");
 
-            // Implement the Nearest Neighbor Algorithm to visit all cities
-            for (int i = 1; i < n; i++) {
-                double minFU = Double.MAX_VALUE; // Initialize minimum fuel consumption
-                int nextCity = -1; // Initialize the next city index
+    // Loop through each city as the starting point for the route
+    for (int startCity = 0; startCity < n; startCity++) {
+        boolean[] visited = new boolean[n]; // Array to track visited cities
+        ArrayList<String> currentRoute = new ArrayList<>(); // List to store the current route
+        double totalFU = 0; // Total fuel consumption for the current route
 
-                // Search for the nearest unvisited city
-                for (int j = 0; j < n; j++) {
-                    if (!visited[j] && fuMatrix[currentCity][j] < minFU) {
-                        minFU = fuMatrix[currentCity][j];
-                        nextCity = j;
-                    }
+        int currentCity = startCity; // Start from the current city
+        visited[currentCity] = true; // Mark the starting city as visited
+        currentRoute.add(cityNames[currentCity]); // Add starting city to the route
+
+        // Loop to visit the remaining cities
+        for (int i = 1; i < n; i++) {
+            double minFU = Double.MAX_VALUE; // Variable to find the nearest unvisited city
+            int nextCity = -1; // Variable to track the index of the next city
+
+            // Find the nearest unvisited city
+            for (int j = 0; j < n; j++) {
+                if (!visited[j] && fuMatrix[currentCity][j] < minFU) {
+                    minFU = fuMatrix[currentCity][j];
+                    nextCity = j;
                 }
-
-                totalFU += minFU; // Add the fuel consumed for this step to the total
-                visited[nextCity] = true; // Mark the next city as visited
-                currentCity = nextCity; // Move to the next city
             }
 
-            // Return to the starting city after visiting all cities
-            double returnFuel = fuMatrix[currentCity][startCity]; // Calculate fuel to return to start
-            totalFU += returnFuel; // Add the return fuel consumption to the total
-
-            // Track the total fuel usage for this starting city
-            fuelUsages[startCity] = totalFU;
-
-            // Update best and worst cases
-            if (totalFU < bestCase) {
-                bestCase = totalFU;
-                bestStartCity = startCity;
-            }
-            if (totalFU > worstCase) {
-                worstCase = totalFU;
-                worstStartCity = startCity;
-            }
+            // Update total fuel consumption and mark the city as visited
+            totalFU += minFU;
+            visited[nextCity] = true;
+            currentRoute.add(cityNames[nextCity]); // Add next city to the route
+            currentCity = nextCity; // Move to the next city
         }
 
-        // Measure end time
-        long endTime = System.nanoTime();
-        double elapsedTimeInSeconds = (endTime - startTime) / 1e9; // Convert nanoseconds to seconds
+        // Return to the starting city to complete the tour
+        totalFU += fuMatrix[currentCity][startCity];
+        currentRoute.add(cityNames[startCity]); // Add the starting city to the end of the route
 
-        // Output the best and worst cases
-        System.out.println("Best case: " + bestCase + " (Starting city: " + cityNames[bestStartCity] + ")");
-        System.out.println("Worst case: " + worstCase + " (Starting city: " + cityNames[worstStartCity] + ")");
-        System.out.println("Fuel usage for all starting cities: " + Arrays.toString(fuelUsages));
+        // Print the current route and its cost
+        System.out.println("Route: " + String.join(" -> ", currentRoute) + " | Cost: " + String.format("%.2f", totalFU));
 
-        // Output the time elapsed
-        System.out.printf("Time elapsed: %.6f seconds%n", elapsedTimeInSeconds);
+        // Check if the current route is the best or worst found so far
+        if (totalFU < minCost) {
+            minCost = totalFU;
+            bestRoute = new ArrayList<>(currentRoute);
+        }
+        if (totalFU > maxCost) {
+            maxCost = totalFU;
+            worstRoute = new ArrayList<>(currentRoute);
+        }
     }
-}
 
+    // Record the end time of the computation
+    long endTime = System.nanoTime();
+    double computationTime = (endTime - startTime) / 1e6; // Convert time to milliseconds
+
+    // Output the best and worst routes found along with their costs
+    System.out.println("\nBest Route: " + String.join(" -> ", bestRoute));
+    System.out.println("Minimum Cost: " + String.format("%.2f", minCost));
+
+    System.out.println("\nWorst Route: " + String.join(" -> ", worstRoute));
+    System.out.println("Maximum Cost: " + String.format("%.2f", maxCost));
+
+    // Output the computation time
+    System.out.println("\nComputation Time: " + String.format("%.2f", computationTime) + " milliseconds");
+}
+}
