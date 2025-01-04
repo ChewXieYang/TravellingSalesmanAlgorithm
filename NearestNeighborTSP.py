@@ -111,6 +111,8 @@ def evaluate_all_routes(fu_matrix):
     print("\nWorst Route: " + " -> ".join(worst_route))
     print(f"Maximum Cost: {worst_cost:.2f}")
     print(f"\nComputation Time: {computation_time:.2f} milliseconds")
+    print("\nTesting on device: MSI GF75 Thin 9SC")
+    print("Operating System: Windows 11 Pro (Version 24H2, Build 26100.2605)")
 
 
 # FU matrix for 5 cities (Sarajevo, Zagreb, etc.)
