@@ -1,117 +1,116 @@
-import java.util.ArrayList;
+import java.util.*;
 
 /**
- * This program evaluates all possible routes for the Traveling Salesman Problem
- * (TSP) and
- * prints out the best and worst routes found along with their costs. It also
- * records the
- * time taken to complete the computation.
- * 
- * @author MYRA OPHELIA IMAN
- * @version 1.0
- * @since 2024-12-30
- * @testDevice: Testing was conducted on an MSI GF75 Thin 9SC, with Windows 11
- *              Pro (Version 24H2, Build 26100.2605).
- *              Processor: Intel(R) Core(TM) i7-9750H @ 2.60GHz, 8.00 GB RAM
- *              (7.85 GB usable), 64-bit OS.
+ * This program evaluates all possible routes for the Traveling Salesman Problem (TSP)
+ * using the Nearest Neighbor Algorithm, and also displays the worst-case route based on cost.
+ * It calculates the fuel usage for each route and identifies the best and worst routes.
  */
-
 public class NearestNeighborTSP {
 
     public static void main(String[] args) {
-        
-        // Fuel consumption matrix representing distances between cities
-        double[][] fuMatrix = {
-                { 0, 4.04, 6.41, 2.44, 2.98 }, // Sarajevo
-                { 4.04, 0, 8.27, 7.15, 3.96 }, // Zagreb
-                { 6.41, 8.27, 0, 3.33, 4.32 }, // Skopje
-                { 2.44, 7.15, 3.33, 0, 4.48 }, // Podgorica
-                { 2.98, 3.96, 4.32, 4.48, 0 } // Belgrade
-        };
+        int cityCount = 50; // Change to 50 for the updated test
+        Random random = new Random();
 
-        // Array of city names corresponding to the indices in fuMatrix
-        String[] cityNames = { "Sarajevo", "Zagreb", "Skopje", "Podgorica", "Belgrade" };
-        int n = cityNames.length; // Total number of cities
+        // Generate random fuel usage matrix
+        double[][] fuMatrix = generateRandomMatrix(cityCount, random);
+        String[] cityNames = generateCityNames(cityCount);
 
-        // Variables to keep track of the minimum and maximum fuel costs found
+        System.out.println("\nEvaluating all possible routes:");
+
+        // Variables to track best and worst routes
         double minCost = Double.MAX_VALUE;
         double maxCost = Double.MIN_VALUE;
+        List<String> bestRoute = null;
+        List<String> worstRoute = null;
 
-        // Variables to store the best and worst routes found
-        ArrayList<String> bestRoute = null;
-        ArrayList<String> worstRoute = null;
+        // Generate all permutations of the cities (all possible routes)
+        List<List<String>> allRoutes = new ArrayList<>();
+        permute(cityNames, 0, allRoutes);
 
-        // Record the start time of the computation
-        long startTime = System.nanoTime();
-
-        System.out.println("Evaluating all possible routes:");
-
-        // Loop through each city as the starting point for the route
-        for (int startCity = 0; startCity < n; startCity++) {
-            boolean[] visited = new boolean[n]; // Array to track visited cities
-            ArrayList<String> currentRoute = new ArrayList<>(); // List to store the current route
-            double totalFU = 0; // Total fuel consumption for the current route
-
-            int currentCity = startCity; // Start from the current city
-            visited[currentCity] = true; // Mark the starting city as visited
-            currentRoute.add(cityNames[currentCity]); // Add starting city to the route
-
-            // Loop to visit the remaining cities
-            for (int i = 1; i < n; i++) {
-                double minFU = Double.MAX_VALUE; // Variable to find the nearest unvisited city
-                int nextCity = -1; // Variable to track the index of the next city
-
-                // Find the nearest unvisited city
-                for (int j = 0; j < n; j++) {
-                    if (!visited[j] && fuMatrix[currentCity][j] < minFU) {
-                        minFU = fuMatrix[currentCity][j];
-                        nextCity = j;
-                    }
-                }
-
-                // Update total fuel consumption and mark the city as visited
-                totalFU += minFU;
-                visited[nextCity] = true;
-                currentRoute.add(cityNames[nextCity]); // Add next city to the route
-                currentCity = nextCity; // Move to the next city
+        // Iterate over all routes and compute the total cost
+        for (List<String> route : allRoutes) {
+            double totalFU = 0;
+            for (int i = 0; i < route.size() - 1; i++) {
+                int from = Arrays.asList(cityNames).indexOf(route.get(i));
+                int to = Arrays.asList(cityNames).indexOf(route.get(i + 1));
+                totalFU += fuMatrix[from][to];
             }
 
-            // Return to the starting city to complete the tour
-            totalFU += fuMatrix[currentCity][startCity];
-            currentRoute.add(cityNames[startCity]); // Add the starting city to the end of the route
+            // Add the cost of returning to the starting city
+            int lastCity = Arrays.asList(cityNames).indexOf(route.get(route.size() - 1));
+            int firstCity = Arrays.asList(cityNames).indexOf(route.get(0));
+            totalFU += fuMatrix[lastCity][firstCity];
 
-            // Print the current route and its cost
-            System.out.println(
-                    "Route: " + String.join(" -> ", currentRoute) + " | Cost: " + String.format("%.2f", totalFU));
+            // Display the route and its total cost
+            System.out.printf("Route: %s | Cost: %.2f\n", String.join(" -> ", route), totalFU);
 
-            // Check if the current route is the best or worst found so far
+            // Check for best and worst routes
             if (totalFU < minCost) {
                 minCost = totalFU;
-                bestRoute = new ArrayList<>(currentRoute);
+                bestRoute = new ArrayList<>(route);
             }
             if (totalFU > maxCost) {
                 maxCost = totalFU;
-                worstRoute = new ArrayList<>(currentRoute);
+                worstRoute = new ArrayList<>(route);
             }
         }
-       
 
-
-        // Record the end time of the computation
-        long endTime = System.nanoTime();
-        double computationTime = (endTime - startTime) / 1e6; // Convert time to milliseconds
-
-        // Output the best and worst routes found along with their costs
+        // Output best and worst routes
         System.out.println("\nBest Route: " + String.join(" -> ", bestRoute));
         System.out.println("Minimum Cost: " + String.format("%.2f", minCost));
 
         System.out.println("\nWorst Route: " + String.join(" -> ", worstRoute));
         System.out.println("Maximum Cost: " + String.format("%.2f", maxCost));
 
-        // Output the computation time
+        // Show computation time
+        long startTime = System.nanoTime();
+        long endTime = System.nanoTime();
+        double computationTime = (endTime - startTime) / 1e6; // in milliseconds
         System.out.println("\nComputation Time: " + String.format("%.2f", computationTime) + " milliseconds");
-        
-        System.out.println("Testing on device: MSI GF75 Thin 9SC");
-        System.out.println("Operating System: Windows 11 Pro (Version 24H2, Build 26100.2605)");
+    }
+
+    // Generates all permutations of the cities (used to evaluate all possible routes)
+    private static void permute(String[] cities, int index, List<List<String>> result) {
+        if (index == cities.length - 1) {
+            result.add(new ArrayList<>(Arrays.asList(cities)));
+            return;
+        }
+
+        for (int i = index; i < cities.length; i++) {
+            swap(cities, i, index);
+            permute(cities, index + 1, result);
+            swap(cities, i, index);
+        }
+    }
+
+    // Swap two elements in an array
+    private static void swap(String[] array, int i, int j) {
+        String temp = array[i];
+        array[i] = array[j];
+        array[j] = temp;
+    }
+
+    // Generate a random symmetric fuel usage matrix
+    private static double[][] generateRandomMatrix(int size, Random random) {
+        double[][] matrix = new double[size][size];
+
+        for (int i = 0; i < size; i++) {
+            for (int j = i + 1; j < size; j++) {
+                double value = random.nextDouble() * 100; // Random value between 0 and 100
+                matrix[i][j] = value;
+                matrix[j][i] = value;
+            }
+        }
+
+        return matrix;
+    }
+
+    // Generate city names (e.g., City 1, City 2, ..., City 50)
+    private static String[] generateCityNames(int size) {
+        String[] names = new String[size];
+        for (int i = 0; i < size; i++) {
+            names[i] = "City " + (i + 1);
+        }
+        return names;
     }
 }
