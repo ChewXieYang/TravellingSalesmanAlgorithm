@@ -1,6 +1,6 @@
 # Bottleneck Travelling Salesman Problem (BTSP)
 
-<br><b> Algorithm used: Brute Force and Nearest Neighbour (+ Dijkstra) </b>
+<br><b> Algorithm used Nearest Neighbour & Lin Kernighan </b>
 <br>Use 2 different programming language : JAVA & Python
 <br>
 <br>example and for reference:
