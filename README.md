@@ -1,7 +1,10 @@
 # Bottleneck Travelling Salesman Problem (BTSP)
 
 <br><b> Algorithm used Nearest Neighbour & Lin Kernighan </b>
-<br>Use 2 different programming language : JAVA & Python
+<br>
+<br><b>Intro </b><br>
+
+The Bottleneck Traveling Salesman Problem (BTSP) is a variant of the classic Traveling Salesman Problem (TSP) where the objective is to minimize the maximum distance traveled on any single edge in the tour. This report explores two algorithms to solve the BTSP: the Nearest Neighbor algorithm and the Lin-Kernighan heuristic. We analyze their performance using datasets of varying sizes. 
 <br>
 <br>example and for reference:
 <br> - https://www.thechalkface.net/resources/Travelling_Salesman_England.pdf
