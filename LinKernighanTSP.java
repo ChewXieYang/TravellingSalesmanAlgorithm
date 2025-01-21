@@ -1,9 +1,79 @@
+import java.io.*;
 import java.util.*;
 
 public class LinKernighanTSP {
     private static final double INF = Double.MAX_VALUE;
 
-    // Calculate the total distance of the tour
+    // CSV file reader. Returns distance matrix and city names
+    public static Map<String, Object> readCSV(String filePath) throws IOException {
+        List<String> cityNames = new ArrayList<>();
+        Map<String, Integer> cityIndexMap = new HashMap<>();
+        String line;
+    
+        // Parse the file and build the city list and distance map
+        try (BufferedReader br = new BufferedReader(new FileReader(filePath))) {
+            line = br.readLine(); // Read the header
+            if (line == null || !line.trim().equalsIgnoreCase("City1,City2,Distance(km)")) {
+                throw new IOException("CSV file must have header: City1,City2,Distance(km)");
+            }
+    
+            while ((line = br.readLine()) != null) {
+                String[] parts = line.split(",");
+                if (parts.length != 3) {
+                    throw new IOException("Invalid row format: " + line);
+                }
+                
+                String city1 = parts[0].trim();
+                String city2 = parts[1].trim();
+                double distance = Double.parseDouble(parts[2].trim());
+    
+                // Add cities to the city list and map
+                if (!cityIndexMap.containsKey(city1)) {
+                    cityIndexMap.put(city1, cityNames.size());
+                    cityNames.add(city1);
+                }
+                if (!cityIndexMap.containsKey(city2)) {
+                    cityIndexMap.put(city2, cityNames.size());
+                    cityNames.add(city2);
+                }
+            }
+        }
+    
+        // Initialize distance matrix
+        int n = cityNames.size();
+        double[][] distanceMatrix = new double[n][n];
+        for (int i = 0; i < n; i++) {
+            Arrays.fill(distanceMatrix[i], INF);
+            distanceMatrix[i][i] = 0; // Distance to self is 0
+        }
+    
+        // Re-read file to populate the distance matrix
+        try (BufferedReader br = new BufferedReader(new FileReader(filePath))) {
+            br.readLine(); // Skip header
+            while ((line = br.readLine()) != null) {
+                String[] parts = line.split(",");
+                String city1 = parts[0].trim();
+                String city2 = parts[1].trim();
+                double distance = Double.parseDouble(parts[2].trim());
+    
+                int index1 = cityIndexMap.get(city1);
+                int index2 = cityIndexMap.get(city2);
+    
+                // Populate symmetric distance matrix
+                distanceMatrix[index1][index2] = distance;
+                distanceMatrix[index2][index1] = distance;
+            }
+        }
+    
+        // Prepare results
+        Map<String, Object> result = new HashMap<>();
+        result.put("cityNames", cityNames);
+        result.put("distanceMatrix", distanceMatrix);
+    
+        return result;
+    }
+
+    // Total distance of the tour
     public static double calculateTourDistance(double[][] distanceMatrix, List<Integer> tour) {
         double totalDistance = 0;
         for (int i = 0; i < tour.size() - 1; i++) {
@@ -13,7 +83,7 @@ public class LinKernighanTSP {
         return roundToTwoDecimals(totalDistance);
     }
 
-    // Round a double to two decimal places
+    // Rounds double to 2 decimal places
     public static double roundToTwoDecimals(double value) {
         return Math.round(value * 100.0) / 100.0;
     }
@@ -28,7 +98,7 @@ public class LinKernighanTSP {
         return newTour;
     }
 
-    // Lin-Kernighan heuristic for solving TSP
+    // Lin-Kernighan Heuristic
     public static List<Integer> linKernighan(double[][] distanceMatrix, List<Integer> initialTour) {
         int n = distanceMatrix.length;
         List<Integer> currentTour = new ArrayList<>(initialTour);
@@ -39,8 +109,8 @@ public class LinKernighanTSP {
             improved = false;
 
             for (int i = 1; i < n - 1; i++) {
-                for (int k = i + 1; k < n; k++) {
-                    List<Integer> newTour = twoOptSwap(currentTour, i, k);
+                for (int j = i + 1; j < n; j++) {
+                    List<Integer> newTour = twoOptSwap(currentTour, i, j);
                     double newDistance = calculateTourDistance(distanceMatrix, newTour);
 
                     if (newDistance < currentDistance) {
@@ -55,93 +125,93 @@ public class LinKernighanTSP {
         return currentTour;
     }
 
-    // Generate an initial tour starting from a specific city
+    // Generates initial tour starting from specific city
     public static List<Integer> generateInitialTour(int n, int startCity) {
         List<Integer> tour = new ArrayList<>();
-        tour.add(startCity); // Fix the starting city
+        tour.add(startCity); // Fixes starting city
         for (int i = 0; i < n; i++) {
             if (i != startCity) {
                 tour.add(i);
             }
         }
-        Collections.shuffle(tour.subList(1, tour.size())); // Shuffle remaining cities
+        Collections.shuffle(tour.subList(1, tour.size())); // Shuffles remaining cities
         return tour;
     }
 
-    // Print the tour with city names
+    // Prints tour with city names
     public static void printTourWithCityNames(List<Integer> tour, List<String> cityNames) {
         for (int i : tour) {
             System.out.print(cityNames.get(i) + " -> ");
         }
-        System.out.println(cityNames.get(tour.get(0))); // Return to start
+        System.out.println(cityNames.get(tour.get(0))); // Returns to start
     }
-
     public static void main(String[] args) {
-        // Example distance matrix (symmetric) with double values
-        double[][] distanceMatrix = {
-            {0.0, 4.04, 6.41, 2.44, 2.98},
-            {4.04, 0.0, 8.27, 7.15, 3.96},
-            {6.41, 8.27, 0.0, 3.33, 4.32},
-            {2.44, 7.15, 3.33, 0.0, 4.48},
-            {2.98, 3.96, 4.32, 4.48, 0.0}
-        };
-
-        // City names corresponding to the indices
-        List<String> cityNames = Arrays.asList("Sarajevo", "Zagreb", "Skopje", "Podgorica", "Belgrade");
-
-        int n = distanceMatrix.length;
-
-        double bestDistance = INF;
-        List<Integer> bestTour = null;
-        int bestStartCity = -1;
-
-        // Start timing the computation
-        long startTime = System.nanoTime();
-
-        // Optimize tours starting from each city
-        for (int startCity = 0; startCity < n; startCity++) {
-            List<Integer> initialTour = generateInitialTour(n, startCity);
-            System.out.println("\nStarting from " + cityNames.get(startCity));
-            System.out.println("Initial Tour:");
-            printTourWithCityNames(initialTour, cityNames);
-            double initialDistance = calculateTourDistance(distanceMatrix, initialTour);
-            System.out.println("Initial Distance: " +  String.format("%.2f", initialDistance));
-
-            List<Integer> optimizedTour = linKernighan(distanceMatrix, initialTour);
-            double optimizedDistance = calculateTourDistance(distanceMatrix, optimizedTour);
-
-            System.out.println("Optimized Tour:");
-            printTourWithCityNames(optimizedTour, cityNames);
-            System.out.println("Optimized Distance: " + String.format("%.2f", optimizedDistance));
-
-            // Update the best tour if this one is better
-            if (optimizedDistance < bestDistance) {
-                bestDistance = optimizedDistance;
-                bestTour = optimizedTour;
-                bestStartCity = startCity;
+        // File path to CSV file
+        String filePath = "DistanceBetweenEuropeanCities.csv";
+    
+        try {
+            // Read data from CSV file
+            Map<String, Object> data = readCSV(filePath);
+            List<String> cityNames = (List<String>) data.get("cityNames");
+            double[][] distanceMatrix = (double[][]) data.get("distanceMatrix");
+    
+            int n = distanceMatrix.length;
+    
+            double bestDistance = INF;
+            List<Integer> bestTour = null;
+            int bestStartCity = -1;
+    
+            // Computation time begins
+            long startTime = System.nanoTime();
+    
+            // Tour optimization from each city
+            for (int startCity = 0; startCity < n; startCity++) {
+                List<Integer> initialTour = generateInitialTour(n, startCity);
+                System.out.println("\nStarting from " + cityNames.get(startCity));
+                System.out.println("Initial Tour:");
+                printTourWithCityNames(initialTour, cityNames);
+                double initialDistance = calculateTourDistance(distanceMatrix, initialTour);
+                System.out.println("Initial Distance: " + String.format("%.2f", initialDistance));
+    
+                List<Integer> optimizedTour = linKernighan(distanceMatrix, initialTour);
+                double optimizedDistance = calculateTourDistance(distanceMatrix, optimizedTour);
+    
+                System.out.println("Optimized Tour:");
+                printTourWithCityNames(optimizedTour, cityNames);
+                System.out.println("Optimized Distance: " + String.format("%.2f", optimizedDistance));
+    
+                // Update the best tour if this one is better
+                if (optimizedDistance < bestDistance) {
+                    bestDistance = optimizedDistance;
+                    bestTour = optimizedTour;
+                    bestStartCity = startCity;
+                }
             }
+    
+            // Computation time ends
+            long endTime = System.nanoTime();
+    
+            // Elapsed time in milliseconds
+            double elapsedTime = (endTime - startTime) / 1_000_000.0;
+    
+            // Best overall tour
+            System.out.println("\nBest Tour Starting from " + cityNames.get(bestStartCity) + ":");
+            printTourWithCityNames(bestTour, cityNames);
+            System.out.println("Best Distance: " + String.format("%.2f", bestDistance));
+    
+            // Time taken to calculate
+            System.out.printf("\nComputation Time: %.2f milliseconds\n", elapsedTime);
+    
+            // Hardware + Software declaration
+            System.out.println("\nOperating System: " + System.getProperty("os.name"));
+            System.out.println("OS Version: " + System.getProperty("os.version"));
+            System.out.println("OS Architecture: " + System.getProperty("os.arch"));
+            System.out.println("User Name: " + System.getProperty("user.name"));
+            System.out.println("Java Version: " + System.getProperty("java.version"));
+            System.out.println("Java Vendor: " + System.getProperty("java.vendor"));
+        } catch (IOException e) {
+            System.err.println("Error reading the CSV file: " + e.getMessage());
         }
-
-        // Stop timing the computation
-        long endTime = System.nanoTime();
-
-        // Calculate the elapsed time in milliseconds
-        double elapsedTime = (endTime - startTime) / 1_000_000.0;
-
-        // Output the best overall tour
-        System.out.println("\nBest Tour Starting from " + cityNames.get(bestStartCity) + ":");
-        printTourWithCityNames(bestTour, cityNames);
-        System.out.println("Best Distance: " + String.format("%.2f", bestDistance));
-
-        // Time taken
-        System.out.printf("\nComputation Time: %.2f milliseconds\n", elapsedTime);
-
-        // Hardware + Software declaration
-        System.out.println("Operating System: " + System.getProperty("os.name"));
-        System.out.println("OS Version: " + System.getProperty("os.version"));
-        System.out.println("OS Architecture: " + System.getProperty("os.arch"));
-        System.out.println("User Name: " + System.getProperty("user.name"));
-        System.out.println("Java Version: " + System.getProperty("java.version"));
-        System.out.println("Java Vendor: " + System.getProperty("java.vendor"));
     }
 }
+    
