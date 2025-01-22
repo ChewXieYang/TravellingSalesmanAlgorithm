@@ -1,128 +1,82 @@
-def nearest_neighbor_algorithm(fu_matrix, start_city):
-    """
-    Nearest Neighbor Algorithm for the Traveling Salesman Problem (TSP).
-    Calculates the route and total fuel consumption starting from a given city.
+import numpy as np
+import random
+import time
+import matplotlib.pyplot as plt
 
-    Parameters
-    ----------
-    fu_matrix : 2D list
-        A matrix of fuel consumption between cities.
-    start_city : int
-        The index of the starting city.
+# Function to generate random cities
+def generate_cities(num_cities):
+    return np.random.rand(num_cities, 2) * 100  # Random coordinates in a 100x100 area
 
-    Returns
-    -------
-    route : list
-        The sequence of visited cities in the route.
-    total_fu : float
-        The total fuel consumption for the entire tour.
-    """
-    # City names corresponding to the indices in the FU matrix
-    city_names = ["Sarajevo", "Zagreb", "Skopje", "Podgorica", "Belgrade"]
+# Function to calculate the distance matrix
+def calculate_distance_matrix(cities):
+    num_cities = len(cities)
+    distance_matrix = np.zeros((num_cities, num_cities))
+    for i in range(num_cities):
+        for j in range(num_cities):
+            if i != j:
+                distance_matrix[i][j] = np.linalg.norm(cities[i] - cities[j])
+    return distance_matrix
 
-    n = len(fu_matrix)
+# Nearest Neighbour Algorithm
+def nearest_neighbour(distance_matrix):
+    n = len(distance_matrix)
     visited = [False] * n
-    current_city = start_city
-    total_fu = 0
+    total_distance = 0
+    current_city = 0
     visited[current_city] = True
-    route = [city_names[current_city]]
 
-    # Visit all cities
     for _ in range(1, n):
-        min_fu = float('inf')
-        next_city = -1
+        nearest_city = -1
+        nearest_distance = float('inf')
+
         for j in range(n):
-            if not visited[j] and fu_matrix[current_city][j] < min_fu:
-                min_fu = fu_matrix[current_city][j]
-                next_city = j
+            if not visited[j] and distance_matrix[current_city][j] < nearest_distance:
+                nearest_distance = distance_matrix[current_city][j]
+                nearest_city = j
 
-        total_fu += min_fu
-        visited[next_city] = True
-        route.append(city_names[next_city])
-        current_city = next_city
+        visited[nearest_city] = True
+        total_distance += nearest_distance
+        current_city = nearest_city
 
-    # Return to the starting city
-    total_fu += fu_matrix[current_city][start_city]
-    route.append(city_names[start_city])
+    total_distance += distance_matrix[current_city][0]  # Return to starting city
+    return total_distance
 
-    return route, total_fu
+# Experiment function to run the Nearest Neighbour algorithm and measure time
+def run_experiment(num_cities):
+    cities = generate_cities(num_cities)
+    distance_matrix = calculate_distance_matrix(cities)
 
-
-def evaluate_all_routes(fu_matrix):
-    """
-    Evaluate all possible Nearest Neighbor routes starting from each city.
-
-    This function takes a 2D list of fuel consumption between cities and
-    evaluates all possible Nearest Neighbor routes starting from each city.
-    The best and worst routes are determined and printed to the console,
-    together with the computation time.
-
-    Parameters
-    ----------
-    fu_matrix : 2D list
-        A matrix of fuel consumption between cities.
-
-    Returns
-    -------
-    None
-    """
-    # Get the names of the cities
-    city_names = ["Sarajevo", "Zagreb", "Skopje", "Podgorica", "Belgrade"]
-
-    # Get the number of cities
-    n = len(fu_matrix)
-
-    # Initialize the best and worst routes
-    best_route = None
-    best_cost = float('inf')
-    worst_route = None
-    worst_cost = float('-inf')
-
-    # Print a message indicating that we are about to evaluate all possible routes
-    print("Evaluating all possible routes:")
-
-    # Measure computation time
-    import time
+    # Measure Nearest Neighbour
     start_time = time.time()
+    nn_distance = nearest_neighbour(distance_matrix)
+    nn_time = time.time() - start_time
 
-    # Iterate over all cities as the starting city
-    for start_city in range(n):
-        # Evaluate the route and get the total fuel consumption
-        route, total_fu = nearest_neighbor_algorithm(fu_matrix, start_city)
+    return nn_distance, nn_time
 
-        # Print the route and cost
-        print(f"Route: {' -> '.join(route)} | Cost: {total_fu:.2f}")
+# Main function to execute experiments for different city counts
+def main():
+    city_counts = [10, 20, 50]
+    nn_times = []
+    nn_distances = []
 
-        # Update the best and worst routes
-        if total_fu < best_cost:
-            best_cost = total_fu
-            best_route = route
-        if total_fu > worst_cost:
-            worst_cost = total_fu
-            worst_route = route
-
-    # Measure computation time
-    end_time = time.time()
-    computation_time = (end_time - start_time) * 1000  # Convert to milliseconds
+    for count in city_counts:
+        distance, time_taken = run_experiment(count)
+        nn_distances.append(distance)
+        nn_times.append(time_taken)
 
     # Print results
-    print("\nBest Route: " + " -> ".join(best_route))
-    print(f"Minimum Cost: {best_cost:.2f}")
-    print("\nWorst Route: " + " -> ".join(worst_route))
-    print(f"Maximum Cost: {worst_cost:.2f}")
-    print(f"\nComputation Time: {computation_time:.2f} milliseconds")
-    print("\nTesting on device: MSI GF75 Thin 9SC")
-    print("Operating System: Windows 11 Pro (Version 24H2, Build 26100.2605)")
+    for i in range(len(city_counts)):
+        print(f"Cities: {city_counts[i]}, Distance: {nn_distances[i]}, Time: {nn_times[i]:.6f} seconds")
 
+    # Plotting the results
+    plt.plot(city_counts, nn_times, label='Nearest Neighbour', marker='o')
 
-# FU matrix for 5 cities (Sarajevo, Zagreb, etc.)
-fu_matrix = [
-    [0, 4.04, 6.41, 2.44, 2.98],
-    [4.04, 0, 8.27, 7.15, 3.96],
-    [6.41, 8.27, 0, 3.33, 4.32],
-    [2.44, 7.15, 3.33, 0, 4.48],
-    [2.98, 3.96, 4.32, 4.48, 0]
-]
+    plt.xlabel('Number of Cities')
+    plt.ylabel('Running Time (seconds)')
+    plt.title('Running Time of Nearest Neighbour Algorithm')
+    plt.legend()
+    plt.grid()
+    plt.show()
 
-# Evaluate all Nearest Neighbor routes
-evaluate_all_routes(fu_matrix)
+if __name__ == "__main__":
+    main()
