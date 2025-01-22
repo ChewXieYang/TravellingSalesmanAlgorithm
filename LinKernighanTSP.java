@@ -171,14 +171,14 @@ public class LinKernighanTSP {
                 System.out.println("Initial Tour:");
                 printTourWithCityNames(initialTour, cityNames);
                 double initialDistance = calculateTourDistance(distanceMatrix, initialTour);
-                System.out.println("Initial Distance: " + String.format("%.2f", initialDistance));
+                System.out.println("\nInitial Distance: " + String.format("%.2f", initialDistance));
     
                 List<Integer> optimizedTour = linKernighan(distanceMatrix, initialTour);
                 double optimizedDistance = calculateTourDistance(distanceMatrix, optimizedTour);
     
-                System.out.println("Optimized Tour:");
+                System.out.println("\nOptimized Tour:");
                 printTourWithCityNames(optimizedTour, cityNames);
-                System.out.println("Optimized Distance: " + String.format("%.2f", optimizedDistance));
+                System.out.println("\nOptimized Distance: " + String.format("%.2f", optimizedDistance));
     
                 // Update the best tour if this one is better
                 if (optimizedDistance < bestDistance) {
@@ -214,4 +214,3 @@ public class LinKernighanTSP {
         }
     }
 }
-    
