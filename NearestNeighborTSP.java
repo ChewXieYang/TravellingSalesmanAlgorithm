@@ -1,116 +1,201 @@
+import java.io.*;
 import java.util.*;
 
-/**
- * This program evaluates all possible routes for the Traveling Salesman Problem (TSP)
- * using the Nearest Neighbor Algorithm, and also displays the worst-case route based on cost.
- * It calculates the fuel usage for each route and identifies the best and worst routes.
- */
 public class NearestNeighborTSP {
+    private static final double INF = Double.MAX_VALUE;
+
+    // CSV file reader. Returns a map containing the distance matrix and city names
+    public static Map<String, Object> readCSV(String filePath) throws IOException {
+        List<String> cityNames = new ArrayList<>(); // List to store city names
+        Map<String, Integer> cityIndexMap = new HashMap<>(); // Map to store city name to index mapping
+        String line; // Variable to hold each line read from the file
+
+        // Try-with-resources to ensure the BufferedReader is closed after use
+        try (BufferedReader br = new BufferedReader(new FileReader(filePath))) {
+            line = br.readLine(); // Read the header line
+            // Check if the header line is present and correctly formatted
+            if (line == null || !line.trim().equalsIgnoreCase("City1,City2,Distance(km)")) {
+                throw new IOException("CSV file must have header: City1,City2,Distance(km)");
+            }
+
+            // Read each line of the CSV file
+            while ((line = br.readLine()) != null) {
+                String[] parts = line.split(","); // Split line into components
+                // Validate the row format
+                if (parts.length != 3) {
+                    throw new IOException("Invalid row format: " + line);
+                }
+
+                String city1 = parts[0].trim(); // First city
+                String city2 = parts[1].trim(); // Second city
+                double distance = Double.parseDouble(parts[2].trim()); // Distance between the cities
+
+                // Add the first city to the city list and map if it doesn't exist
+                if (!cityIndexMap.containsKey(city1)) {
+                    cityIndexMap.put(city1, cityNames.size()); // Map city to its index
+                    cityNames.add(city1); // Add city to list
+                }
+                // Add the second city to the city list and map if it doesn't exist
+                if (!cityIndexMap.containsKey(city2)) {
+                    cityIndexMap.put(city2, cityNames.size()); // Map city to its index
+                    cityNames.add(city2); // Add city to list
+                }
+            }
+        }
+
+        int n = cityNames.size(); // Number of unique cities
+        double[][] distanceMatrix = new double[n][n]; // Initialize the distance matrix
+        for (int i = 0; i < n; i++) {
+            Arrays.fill(distanceMatrix[i], INF); // Fill with INF to represent no direct connection
+            distanceMatrix[i][i] = 0; // Distance to self is always 0
+        }
+
+        // Re-read the file to populate the distance matrix
+        try (BufferedReader br = new BufferedReader(new FileReader(filePath))) {
+            br.readLine(); // Skip the header line
+            while ((line = br.readLine()) != null) {
+                String[] parts = line.split(","); // Split line into components
+                String city1 = parts[0].trim(); // First city
+                String city2 = parts[1].trim(); // Second city
+                double distance = Double.parseDouble(parts[2].trim()); // Distance between the cities
+
+                int index1 = cityIndexMap.get(city1); // Retrieve index of the first city
+                int index2 = cityIndexMap.get(city2); // Retrieve index of the second city
+
+                // Populate the symmetric distance matrix with the distance
+                distanceMatrix[index1][index2] = distance;
+                distanceMatrix[index2][index1] = distance;
+            }
+        }
+
+        // Prepare the result map to return
+        Map<String, Object> result = new HashMap<>();
+        result.put("cityNames", cityNames); // Add city names to the result
+        result.put("distanceMatrix", distanceMatrix); // Add distance matrix to the result
+
+        return result; // Return the result map
+    }
+
+    // Calculates the total distance of a given tour
+    public static double calculateTourDistance(double[][] distanceMatrix, List<Integer> tour) {
+        // Initialize total distance to 0
+        double totalDistance = 0;
+        
+        // Loop through the tour list to calculate the distance between consecutive cities
+        for (int i = 0; i < tour.size() - 1; i++) {
+            // Add the distance from the current city to the next city in the tour
+            totalDistance += distanceMatrix[tour.get(i)][tour.get(i + 1)];
+        }
+        
+        // Add the distance from the last city back to the starting city to complete the tour
+        totalDistance += distanceMatrix[tour.get(tour.size() - 1)][tour.get(0)];
+        
+        // Round the total distance to two decimal places and return it
+        return roundToTwoDecimals(totalDistance);
+    }
+
+    // Rounds double to 2 decimal places
+    public static double roundToTwoDecimals(double value) {
+        return Math.round(value * 100.0) / 100.0;
+    }
+
+    // Nearest Neighbor Algorithm
+    public static List<Integer> nearestNeighbor(double[][] distanceMatrix, int startCity) {
+        int n = distanceMatrix.length;
+        List<Integer> tour = new ArrayList<>();
+        boolean[] visited = new boolean[n];
+        int currentCity = startCity;
+
+        visited[currentCity] = true;
+        tour.add(currentCity);
+
+        for (int i = 1; i < n; i++) {
+            double nearestDistance = INF;
+            int nearestCity = -1;
+
+            // Find the nearest unvisited city
+            for (int j = 0; j < n; j++) {
+                if (!visited[j] && distanceMatrix[currentCity][j] < nearestDistance) {
+                    nearestDistance = distanceMatrix[currentCity][j];
+                    nearestCity = j;
+                }
+            }
+
+            visited[nearestCity] = true;
+            tour.add(nearestCity);
+            currentCity = nearestCity;
+        }
+
+        return tour;
+    }
+
+    // Prints tour with city names
+    public static void printTourWithCityNames(List<Integer> tour, List<String> cityNames) {
+        for (int i : tour) {
+            System.out.print(cityNames.get(i) + " -> ");
+        }
+        System.out.println(cityNames.get(tour.get(0))); // Returns to start
+    }
 
     public static void main(String[] args) {
-        int cityCount = 50; // Change to 50 for the updated test
-        Random random = new Random();
+        // File path to CSV file
+        String filePath = "DistanceBetweenEuropeanCities.csv";
 
-        // Generate random fuel usage matrix
-        double[][] fuMatrix = generateRandomMatrix(cityCount, random);
-        String[] cityNames = generateCityNames(cityCount);
+        try {
+            // Read data from CSV file
+            Map<String, Object> data = readCSV(filePath);
+            List<String> cityNames = (List<String>) data.get("cityNames");
+            double[][] distanceMatrix = (double[][]) data.get("distanceMatrix");
 
-        System.out.println("\nEvaluating all possible routes:");
+            int n = distanceMatrix.length;
 
-        // Variables to track best and worst routes
-        double minCost = Double.MAX_VALUE;
-        double maxCost = Double.MIN_VALUE;
-        List<String> bestRoute = null;
-        List<String> worstRoute = null;
+            double bestDistance = INF;
+            List<Integer> bestTour = null;
+            int bestStartCity = -1;
 
-        // Generate all permutations of the cities (all possible routes)
-        List<List<String>> allRoutes = new ArrayList<>();
-        permute(cityNames, 0, allRoutes);
+            // Computation time begins
+            long startTime = System.nanoTime();
 
-        // Iterate over all routes and compute the total cost
-        for (List<String> route : allRoutes) {
-            double totalFU = 0;
-            for (int i = 0; i < route.size() - 1; i++) {
-                int from = Arrays.asList(cityNames).indexOf(route.get(i));
-                int to = Arrays.asList(cityNames).indexOf(route.get(i + 1));
-                totalFU += fuMatrix[from][to];
+            // Tour optimization from each city
+            for (int startCity = 0; startCity < n; startCity++) {
+                List<Integer> tour = nearestNeighbor(distanceMatrix, startCity);
+                double tourDistance = calculateTourDistance(distanceMatrix, tour);
+
+                System.out.println("\nTour Starting from " + cityNames.get(startCity) + ":");
+                printTourWithCityNames(tour, cityNames);
+                System.out.println("Distance: " + String.format("%.2f", tourDistance));
+
+                // Update the best tour if this one is better
+                if (tourDistance < bestDistance) {
+                    bestDistance = tourDistance;
+                    bestTour = tour;
+                    bestStartCity = startCity;
+                }
             }
 
-            // Add the cost of returning to the starting city
-            int lastCity = Arrays.asList(cityNames).indexOf(route.get(route.size() - 1));
-            int firstCity = Arrays.asList(cityNames).indexOf(route.get(0));
-            totalFU += fuMatrix[lastCity][firstCity];
+            // Computation time ends
+            long endTime = System.nanoTime();
 
-            // Display the route and its total cost
-            System.out.printf("Route: %s | Cost: %.2f\n", String.join(" -> ", route), totalFU);
+            // Elapsed time in milliseconds
+            double elapsedTime = (endTime - startTime) / 1_000_000.0;
 
-            // Check for best and worst routes
-            if (totalFU < minCost) {
-                minCost = totalFU;
-                bestRoute = new ArrayList<>(route);
-            }
-            if (totalFU > maxCost) {
-                maxCost = totalFU;
-                worstRoute = new ArrayList<>(route);
-            }
+            // Best overall tour
+            System.out.println("\nBest Tour Starting from " + cityNames.get(bestStartCity) + ":");
+            printTourWithCityNames(bestTour, cityNames);
+            System.out.println("Best Distance: " + String.format("%.2f", bestDistance));
+
+            // Time taken to calculate
+            System.out.printf("\nComputation Time: %.2f milliseconds\n", elapsedTime);
+
+            // Hardware + Software declaration
+            System.out.println("\nOperating System: " + System.getProperty("os.name"));
+            System.out.println("OS Version: " + System.getProperty("os.version"));
+            System.out.println("OS Architecture: " + System.getProperty("os.arch"));
+            System.out.println("User Name: " + System.getProperty("user.name"));
+            System.out.println("Java Version: " + System.getProperty("java.version"));
+            System.out.println("Java Vendor: " + System.getProperty("java.vendor"));
+        } catch (IOException e) {
+            System.err.println("Error reading the CSV file: " + e.getMessage());
         }
-
-        // Output best and worst routes
-        System.out.println("\nBest Route: " + String.join(" -> ", bestRoute));
-        System.out.println("Minimum Cost: " + String.format("%.2f", minCost));
-
-        System.out.println("\nWorst Route: " + String.join(" -> ", worstRoute));
-        System.out.println("Maximum Cost: " + String.format("%.2f", maxCost));
-
-        // Show computation time
-        long startTime = System.nanoTime();
-        long endTime = System.nanoTime();
-        double computationTime = (endTime - startTime) / 1e6; // in milliseconds
-        System.out.println("\nComputation Time: " + String.format("%.2f", computationTime) + " milliseconds");
-    }
-
-    // Generates all permutations of the cities (used to evaluate all possible routes)
-    private static void permute(String[] cities, int index, List<List<String>> result) {
-        if (index == cities.length - 1) {
-            result.add(new ArrayList<>(Arrays.asList(cities)));
-            return;
-        }
-
-        for (int i = index; i < cities.length; i++) {
-            swap(cities, i, index);
-            permute(cities, index + 1, result);
-            swap(cities, i, index);
-        }
-    }
-
-    // Swap two elements in an array
-    private static void swap(String[] array, int i, int j) {
-        String temp = array[i];
-        array[i] = array[j];
-        array[j] = temp;
-    }
-
-    // Generate a random symmetric fuel usage matrix
-    private static double[][] generateRandomMatrix(int size, Random random) {
-        double[][] matrix = new double[size][size];
-
-        for (int i = 0; i < size; i++) {
-            for (int j = i + 1; j < size; j++) {
-                double value = random.nextDouble() * 100; // Random value between 0 and 100
-                matrix[i][j] = value;
-                matrix[j][i] = value;
-            }
-        }
-
-        return matrix;
-    }
-
-    // Generate city names (e.g., City 1, City 2, ..., City 50)
-    private static String[] generateCityNames(int size) {
-        String[] names = new String[size];
-        for (int i = 0; i < size; i++) {
-            names[i] = "City " + (i + 1);
-        }
-        return names;
     }
 }
