@@ -3,50 +3,53 @@ import java.util.*;
 
 public class LinKernighanTSP {
     private static final double INF = Double.MAX_VALUE;
+    private static final int MAX_CITIES = 50; // Change this to your desired limit
 
-    // CSV file reader. Returns distance matrix and city names
+    // CSV file reader. Returns distance matrix and city names, limited to MAX_CITIES
     public static Map<String, Object> readCSV(String filePath) throws IOException {
         List<String> cityNames = new ArrayList<>();
         Map<String, Integer> cityIndexMap = new HashMap<>();
         String line;
-    
+
         // Parse the file and build the city list and distance map
         try (BufferedReader br = new BufferedReader(new FileReader(filePath))) {
             line = br.readLine(); // Read the header
             if (line == null || !line.trim().equalsIgnoreCase("City1,City2,Distance(km)")) {
                 throw new IOException("CSV file must have header: City1,City2,Distance(km)");
             }
-    
+
             while ((line = br.readLine()) != null) {
+                if (cityNames.size() >= MAX_CITIES) break; // Stop reading beyond the limit
+
                 String[] parts = line.split(",");
                 if (parts.length != 3) {
                     throw new IOException("Invalid row format: " + line);
                 }
-                
+
                 String city1 = parts[0].trim();
                 String city2 = parts[1].trim();
                 double distance = Double.parseDouble(parts[2].trim());
-    
-                // Add cities to the city list and map
-                if (!cityIndexMap.containsKey(city1)) {
+
+                // Add cities to the city list and map if they're within the limit
+                if (cityNames.size() < MAX_CITIES && !cityIndexMap.containsKey(city1)) {
                     cityIndexMap.put(city1, cityNames.size());
                     cityNames.add(city1);
                 }
-                if (!cityIndexMap.containsKey(city2)) {
+                if (cityNames.size() < MAX_CITIES && !cityIndexMap.containsKey(city2)) {
                     cityIndexMap.put(city2, cityNames.size());
                     cityNames.add(city2);
                 }
             }
         }
-    
-        // Initialize distance matrix
+
+        // Initialize distance matrix for limited cities
         int n = cityNames.size();
         double[][] distanceMatrix = new double[n][n];
         for (int i = 0; i < n; i++) {
             Arrays.fill(distanceMatrix[i], INF);
             distanceMatrix[i][i] = 0; // Distance to self is 0
         }
-    
+
         // Re-read file to populate the distance matrix
         try (BufferedReader br = new BufferedReader(new FileReader(filePath))) {
             br.readLine(); // Skip header
@@ -55,21 +58,23 @@ public class LinKernighanTSP {
                 String city1 = parts[0].trim();
                 String city2 = parts[1].trim();
                 double distance = Double.parseDouble(parts[2].trim());
-    
-                int index1 = cityIndexMap.get(city1);
-                int index2 = cityIndexMap.get(city2);
-    
-                // Populate symmetric distance matrix
-                distanceMatrix[index1][index2] = distance;
-                distanceMatrix[index2][index1] = distance;
+
+                if (cityIndexMap.containsKey(city1) && cityIndexMap.containsKey(city2)) {
+                    int index1 = cityIndexMap.get(city1);
+                    int index2 = cityIndexMap.get(city2);
+
+                    // Populate symmetric distance matrix
+                    distanceMatrix[index1][index2] = distance;
+                    distanceMatrix[index2][index1] = distance;
+                }
             }
         }
-    
+
         // Prepare results
         Map<String, Object> result = new HashMap<>();
         result.put("cityNames", cityNames);
         result.put("distanceMatrix", distanceMatrix);
-    
+
         return result;
     }
 
@@ -148,22 +153,22 @@ public class LinKernighanTSP {
     public static void main(String[] args) {
         // File path to CSV file
         String filePath = "DistanceBetweenEuropeanCities.csv";
-    
+
         try {
             // Read data from CSV file
             Map<String, Object> data = readCSV(filePath);
             List<String> cityNames = (List<String>) data.get("cityNames");
             double[][] distanceMatrix = (double[][]) data.get("distanceMatrix");
-    
+
             int n = distanceMatrix.length;
-    
+
             double bestDistance = INF;
             List<Integer> bestTour = null;
             int bestStartCity = -1;
-    
+
             // Computation time begins
             long startTime = System.nanoTime();
-    
+
             // Tour optimization from each city
             for (int startCity = 0; startCity < n; startCity++) {
                 List<Integer> initialTour = generateInitialTour(n, startCity);
@@ -172,14 +177,14 @@ public class LinKernighanTSP {
                 printTourWithCityNames(initialTour, cityNames);
                 double initialDistance = calculateTourDistance(distanceMatrix, initialTour);
                 System.out.println("\nInitial Distance: " + String.format("%.2f", initialDistance));
-    
+
                 List<Integer> optimizedTour = linKernighan(distanceMatrix, initialTour);
                 double optimizedDistance = calculateTourDistance(distanceMatrix, optimizedTour);
-    
+
                 System.out.println("\nOptimized Tour:");
                 printTourWithCityNames(optimizedTour, cityNames);
                 System.out.println("\nOptimized Distance: " + String.format("%.2f", optimizedDistance));
-    
+
                 // Update the best tour if this one is better
                 if (optimizedDistance < bestDistance) {
                     bestDistance = optimizedDistance;
@@ -187,21 +192,21 @@ public class LinKernighanTSP {
                     bestStartCity = startCity;
                 }
             }
-    
+
             // Computation time ends
             long endTime = System.nanoTime();
-    
+
             // Elapsed time in milliseconds
             double elapsedTime = (endTime - startTime) / 1_000_000.0;
-    
+
             // Best overall tour
             System.out.println("\nBest Tour Starting from " + cityNames.get(bestStartCity) + ":");
             printTourWithCityNames(bestTour, cityNames);
             System.out.println("Best Distance: " + String.format("%.2f", bestDistance));
-    
+
             // Time taken to calculate
             System.out.printf("\nComputation Time: %.2f milliseconds\n", elapsedTime);
-    
+
             // Hardware + Software declaration
             System.out.println("\nOperating System: " + System.getProperty("os.name"));
             System.out.println("OS Version: " + System.getProperty("os.version"));
