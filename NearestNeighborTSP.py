@@ -1,82 +1,131 @@
-import numpy as np
-import random
+import csv
+import math
 import time
-import matplotlib.pyplot as plt
+import platform
 
-# Function to generate random cities
-def generate_cities(num_cities):
-    return np.random.rand(num_cities, 2) * 100  # Random coordinates in a 100x100 area
+INF = float('inf')
 
-# Function to calculate the distance matrix
-def calculate_distance_matrix(cities):
-    num_cities = len(cities)
-    distance_matrix = np.zeros((num_cities, num_cities))
-    for i in range(num_cities):
-        for j in range(num_cities):
-            if i != j:
-                distance_matrix[i][j] = np.linalg.norm(cities[i] - cities[j])
-    return distance_matrix
+def read_csv(file_path):
+    """
+    Reads the CSV file and constructs a distance matrix and city names list.
+    """
+    city_names = []
+    city_index_map = {}
+    edges = []
 
-# Nearest Neighbour Algorithm
-def nearest_neighbour(distance_matrix):
-    n = len(distance_matrix)
-    visited = [False] * n
+    with open(file_path, 'r') as csvfile:
+        reader = csv.reader(csvfile)
+        header = next(reader)
+        if header != ["City1", "City2", "Distance(km)"]:
+            raise ValueError("CSV file must have header: City1,City2,Distance(km)")
+
+        for row in reader:
+            city1, city2, distance = row[0].strip(), row[1].strip(), float(row[2].strip())
+            if city1 not in city_index_map:
+                city_index_map[city1] = len(city_names)
+                city_names.append(city1)
+            if city2 not in city_index_map:
+                city_index_map[city2] = len(city_names)
+                city_names.append(city2)
+            edges.append((city1, city2, distance))
+
+    n = len(city_names)
+    distance_matrix = [[INF] * n for _ in range(n)]
+    for i in range(n):
+        distance_matrix[i][i] = 0
+
+    for city1, city2, distance in edges:
+        index1 = city_index_map[city1]
+        index2 = city_index_map[city2]
+        distance_matrix[index1][index2] = distance
+        distance_matrix[index2][index1] = distance
+
+    return city_names, distance_matrix
+
+def calculate_tour_distance(distance_matrix, tour):
+    """
+    Calculates the total distance of a given tour.
+    """
     total_distance = 0
-    current_city = 0
-    visited[current_city] = True
+    for i in range(len(tour) - 1):
+        total_distance += distance_matrix[tour[i]][tour[i + 1]]
+    total_distance += distance_matrix[tour[-1]][tour[0]]  # Return to start
+    return round(total_distance, 2)
 
-    for _ in range(1, n):
+def nearest_neighbor(distance_matrix, start_city):
+    """
+    Implements the Nearest Neighbor algorithm.
+    """
+    n = len(distance_matrix)
+    tour = [start_city]
+    visited = [False] * n
+    visited[start_city] = True
+
+    current_city = start_city
+    for _ in range(n - 1):
+        nearest_distance = INF
         nearest_city = -1
-        nearest_distance = float('inf')
 
-        for j in range(n):
-            if not visited[j] and distance_matrix[current_city][j] < nearest_distance:
-                nearest_distance = distance_matrix[current_city][j]
-                nearest_city = j
+        for next_city in range(n):
+            if not visited[next_city] and distance_matrix[current_city][next_city] < nearest_distance:
+                nearest_distance = distance_matrix[current_city][next_city]
+                nearest_city = next_city
 
         visited[nearest_city] = True
-        total_distance += nearest_distance
+        tour.append(nearest_city)
         current_city = nearest_city
 
-    total_distance += distance_matrix[current_city][0]  # Return to starting city
-    return total_distance
+    return tour
 
-# Experiment function to run the Nearest Neighbour algorithm and measure time
-def run_experiment(num_cities):
-    cities = generate_cities(num_cities)
-    distance_matrix = calculate_distance_matrix(cities)
+def print_tour_with_city_names(tour, city_names):
+    """
+    Prints the tour with city names.
+    """
+    tour_names = [city_names[city] for city in tour]
+    print(" -> ".join(tour_names) + f" -> {city_names[tour[0]]}")
 
-    # Measure Nearest Neighbour
-    start_time = time.time()
-    nn_distance = nearest_neighbour(distance_matrix)
-    nn_time = time.time() - start_time
-
-    return nn_distance, nn_time
-
-# Main function to execute experiments for different city counts
 def main():
-    city_counts = [10, 20, 50]
-    nn_times = []
-    nn_distances = []
+    file_path = "DistanceBetweenEuropeanCities.csv"
 
-    for count in city_counts:
-        distance, time_taken = run_experiment(count)
-        nn_distances.append(distance)
-        nn_times.append(time_taken)
+    try:
+        city_names, distance_matrix = read_csv(file_path)
+        n = len(distance_matrix)
 
-    # Print results
-    for i in range(len(city_counts)):
-        print(f"Cities: {city_counts[i]}, Distance: {nn_distances[i]}, Time: {nn_times[i]:.6f} seconds")
+        best_distance = INF
+        best_tour = None
+        best_start_city = -1
 
-    # Plotting the results
-    plt.plot(city_counts, nn_times, label='Nearest Neighbour', marker='o')
+        start_time = time.time()
 
-    plt.xlabel('Number of Cities')
-    plt.ylabel('Running Time (seconds)')
-    plt.title('Running Time of Nearest Neighbour Algorithm')
-    plt.legend()
-    plt.grid()
-    plt.show()
+        for start_city in range(n):
+            tour = nearest_neighbor(distance_matrix, start_city)
+            tour_distance = calculate_tour_distance(distance_matrix, tour)
+
+            print(f"\nTour Starting from {city_names[start_city]}:")
+            print_tour_with_city_names(tour, city_names)
+            print(f"Distance: {tour_distance:.2f} km")
+
+            if tour_distance < best_distance:
+                best_distance = tour_distance
+                best_tour = tour
+                best_start_city = start_city
+
+        end_time = time.time()
+        elapsed_time = (end_time - start_time) * 1000
+
+        print(f"\nBest Tour Starting from {city_names[best_start_city]}:")
+        print_tour_with_city_names(best_tour, city_names)
+        print(f"Best Distance: {best_distance:.2f} km")
+
+        print(f"\nComputation Time: {elapsed_time:.2f} milliseconds")
+
+        print("\nOperating System:", platform.system())
+        print("OS Version:", platform.version())
+        print("OS Architecture:", platform.architecture()[0])
+        print("Python Version:", platform.python_version())
+
+    except Exception as e:
+        print("Error:", str(e))
 
 if __name__ == "__main__":
     main()
