@@ -1,79 +1,79 @@
 import java.io.*;
 import java.util.*;
 
-public class NearestNeighborTSP {
+public class NearestNeighborTSP1 {
     private static final double INF = Double.MAX_VALUE;
+    private static final int MAX_CITIES = 10;
 
     // CSV file reader. Returns a map containing the distance matrix and city names
     public static Map<String, Object> readCSV(String filePath) throws IOException {
-        List<String> cityNames = new ArrayList<>(); // List to store city names
-        Map<String, Integer> cityIndexMap = new HashMap<>(); // Map to store city name to index mapping
-        String line; // Variable to hold each line read from the file
-
-        // Try-with-resources to ensure the BufferedReader is closed after use
+        List<String> cityNames = new ArrayList<>();
+        Map<String, Integer> cityIndexMap = new HashMap<>();
+        String line;
+    
+        // Read all cities and distances
         try (BufferedReader br = new BufferedReader(new FileReader(filePath))) {
-            line = br.readLine(); // Read the header line
-            // Check if the header line is present and correctly formatted
+            line = br.readLine();
             if (line == null || !line.trim().equalsIgnoreCase("City1,City2,Distance(km)")) {
                 throw new IOException("CSV file must have header: City1,City2,Distance(km)");
             }
-
-            // Read each line of the CSV file
+    
             while ((line = br.readLine()) != null) {
-                String[] parts = line.split(","); // Split line into components
-                // Validate the row format
+                String[] parts = line.split(",");
                 if (parts.length != 3) {
                     throw new IOException("Invalid row format: " + line);
                 }
-
-                String city1 = parts[0].trim(); // First city
-                String city2 = parts[1].trim(); // Second city
-                double distance = Double.parseDouble(parts[2].trim()); // Distance between the cities
-
-                // Add the first city to the city list and map if it doesn't exist
+    
+                String city1 = parts[0].trim();
+                String city2 = parts[1].trim();
+                double distance = Double.parseDouble(parts[2].trim());
+    
+                // Add cities to the map and list
                 if (!cityIndexMap.containsKey(city1)) {
-                    cityIndexMap.put(city1, cityNames.size()); // Map city to its index
-                    cityNames.add(city1); // Add city to list
+                    cityIndexMap.put(city1, cityNames.size());
+                    cityNames.add(city1);
                 }
-                // Add the second city to the city list and map if it doesn't exist
                 if (!cityIndexMap.containsKey(city2)) {
-                    cityIndexMap.put(city2, cityNames.size()); // Map city to its index
-                    cityNames.add(city2); // Add city to list
+                    cityIndexMap.put(city2, cityNames.size());
+                    cityNames.add(city2);
                 }
             }
         }
-
-        int n = cityNames.size(); // Number of unique cities
-        double[][] distanceMatrix = new double[n][n]; // Initialize the distance matrix
+    
+        // Limit the number of cities to MAX_CITIES
+        int n = Math.min(cityNames.size(), MAX_CITIES);
+        double[][] distanceMatrix = new double[n][n];
         for (int i = 0; i < n; i++) {
-            Arrays.fill(distanceMatrix[i], INF); // Fill with INF to represent no direct connection
-            distanceMatrix[i][i] = 0; // Distance to self is always 0
+            Arrays.fill(distanceMatrix[i], INF);
+            distanceMatrix[i][i] = 0;
         }
-
-        // Re-read the file to populate the distance matrix
+    
+        // Re-read the file to populate the truncated distance matrix
         try (BufferedReader br = new BufferedReader(new FileReader(filePath))) {
             br.readLine(); // Skip the header line
             while ((line = br.readLine()) != null) {
-                String[] parts = line.split(","); // Split line into components
-                String city1 = parts[0].trim(); // First city
-                String city2 = parts[1].trim(); // Second city
-                double distance = Double.parseDouble(parts[2].trim()); // Distance between the cities
-
-                int index1 = cityIndexMap.get(city1); // Retrieve index of the first city
-                int index2 = cityIndexMap.get(city2); // Retrieve index of the second city
-
-                // Populate the symmetric distance matrix with the distance
-                distanceMatrix[index1][index2] = distance;
-                distanceMatrix[index2][index1] = distance;
+                String[] parts = line.split(",");
+                String city1 = parts[0].trim();
+                String city2 = parts[1].trim();
+                double distance = Double.parseDouble(parts[2].trim());
+    
+                Integer index1 = cityIndexMap.get(city1);
+                Integer index2 = cityIndexMap.get(city2);
+    
+                // Only populate the matrix if the cities are within the first MAX_CITIES
+                if (index1 != null && index2 != null && index1 < n && index2 < n) {
+                    distanceMatrix[index1][index2] = distance;
+                    distanceMatrix[index2][index1] = distance;
+                }
             }
         }
-
-        // Prepare the result map to return
+    
+        // Prepare the result map
         Map<String, Object> result = new HashMap<>();
-        result.put("cityNames", cityNames); // Add city names to the result
-        result.put("distanceMatrix", distanceMatrix); // Add distance matrix to the result
-
-        return result; // Return the result map
+        result.put("cityNames", cityNames.subList(0, n)); // Limit city names to MAX_CITIES
+        result.put("distanceMatrix", distanceMatrix);
+    
+        return result;
     }
 
     // Calculates the total distance of a given tour
