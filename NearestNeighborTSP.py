@@ -86,16 +86,10 @@ def print_tour_with_city_names(tour, city_names):
 
 def main():
     file_path = "DistanceBetweenEuropeanCities.csv"
-    number_of_cities = int(input("Enter the number of cities to consider (up to 50): "))
 
     try:
         city_names, distance_matrix = read_csv(file_path)
         n = len(distance_matrix)
-
-        if number_of_cities > n:
-            raise ValueError(f"The CSV file contains only {n} cities, but {number_of_cities} were requested.")
-        if number_of_cities < 2:
-            raise ValueError("You must select at least 2 cities to run the algorithm.")
 
         best_distance = INF
         best_tour = None
@@ -103,7 +97,7 @@ def main():
 
         start_time = time.time()
 
-        for start_city in range(number_of_cities):
+        for start_city in range(n):
             tour = nearest_neighbor(distance_matrix, start_city)
             tour_distance = calculate_tour_distance(distance_matrix, tour)
 
