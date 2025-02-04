@@ -3,7 +3,7 @@ import java.util.*;
 
 public class NearestNeighborTSP1 {
     private static final double INF = Double.MAX_VALUE;
-    private static final int MAX_CITIES = 10;
+    private static final int MAX_CITIES = 50;
 
     // CSV file reader. Returns a map containing the distance matrix and city names
     public static Map<String, Object> readCSV(String filePath) throws IOException {
