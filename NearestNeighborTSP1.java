@@ -3,9 +3,25 @@ import java.util.*;
 
 public class NearestNeighborTSP1 {
     private static final double INF = Double.MAX_VALUE;
-    private static final int MAX_CITIES = 50;
+    private static final int MAX_CITIES = 25;
 
-    // CSV file reader. Returns a map containing the distance matrix and city names
+    // Reads a CSV file and returns a map containing the distance matrix and city names
+    // 
+    // The CSV file should have the following format:
+    // City1,City2,Distance(km)
+    // 
+    // The distance matrix is a 2D array where the element at row i and column j
+    // represents the distance from city i to city j.
+    //
+    // The city names are stored in a list, and the distance matrix is populated
+    // such that the element at row i and column j represents the distance from
+    // cityNames[i] to cityNames[j].
+    //
+    // The city names and distance matrix are both limited to MAX_CITIES if the
+    // input file has more than MAX_CITIES cities.
+    //
+    // This method throws an IOException if the input file does not have the
+    // correct header or if any row has an invalid format.
     public static Map<String, Object> readCSV(String filePath) throws IOException {
         List<String> cityNames = new ArrayList<>();
         Map<String, Integer> cityIndexMap = new HashMap<>();
@@ -78,17 +94,25 @@ public class NearestNeighborTSP1 {
 
     // Calculates the total distance of a given tour
     public static double calculateTourDistance(double[][] distanceMatrix, List<Integer> tour) {
-        // Initialize total distance to 0
+        // Initialize the total distance of the tour to 0
         double totalDistance = 0;
         
-        // Loop through the tour list to calculate the distance between consecutive cities
+        // Loop through the tour list to calculate the total distance of the tour
         for (int i = 0; i < tour.size() - 1; i++) {
+            // Get the current city and the next city in the tour
+            int currentCity = tour.get(i);
+            int nextCity = tour.get(i + 1);
+            
             // Add the distance from the current city to the next city in the tour
-            totalDistance += distanceMatrix[tour.get(i)][tour.get(i + 1)];
+            // to the total distance
+            totalDistance += distanceMatrix[currentCity][nextCity];
         }
         
         // Add the distance from the last city back to the starting city to complete the tour
-        totalDistance += distanceMatrix[tour.get(tour.size() - 1)][tour.get(0)];
+        // and add it to the total distance
+        int lastCity = tour.get(tour.size() - 1);
+        int startCity = tour.get(0);
+        totalDistance += distanceMatrix[lastCity][startCity];
         
         // Round the total distance to two decimal places and return it
         return roundToTwoDecimals(totalDistance);
@@ -130,11 +154,21 @@ public class NearestNeighborTSP1 {
     }
 
     // Prints tour with city names
+    // 
+    // This function takes a tour (a list of city indices) and a list of city names
+    // and prints out the tour with the city names instead of the indices.
+    // 
+    // For example, if the tour is [0, 1, 2, 0] and the city names are ["Paris", "London", "Berlin"],
+    // then the function will print "Paris -> London -> Berlin -> Paris"
+    // 
+    // The function is useful for debugging and for displaying the results of the TSP algorithm
     public static void printTourWithCityNames(List<Integer> tour, List<String> cityNames) {
+        // Loop through the tour list and print the city name at each index
         for (int i : tour) {
             System.out.print(cityNames.get(i) + " -> ");
         }
-        System.out.println(cityNames.get(tour.get(0))); // Returns to start
+        // Print the city name at the starting index to complete the tour
+        System.out.println(cityNames.get(tour.get(0))); 
     }
 
     public static void main(String[] args) {
