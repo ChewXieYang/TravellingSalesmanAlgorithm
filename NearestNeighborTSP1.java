@@ -3,7 +3,7 @@ import java.util.*;
 
 public class NearestNeighborTSP1 {
     private static final double INF = Double.MAX_VALUE;
-    private static final int MAX_CITIES = 25;
+    private static final int MAX_CITIES = 10; // set 10 , 25, 50 - for the dataset 
 
     // Reads a CSV file and returns a map containing the distance matrix and city names
     // 
@@ -172,34 +172,39 @@ public class NearestNeighborTSP1 {
     }
 
     public static void main(String[] args) {
-        // File path to CSV file
+        // Define the file path to the CSV file containing the distance data
         String filePath = "DistanceBetweenEuropeanCities.csv";
 
         try {
-            // Read data from CSV file
+            // Read city names and their distance matrix from the CSV file
             Map<String, Object> data = readCSV(filePath);
             List<String> cityNames = (List<String>) data.get("cityNames");
             double[][] distanceMatrix = (double[][]) data.get("distanceMatrix");
 
+            // Number of cities in the distance matrix
             int n = distanceMatrix.length;
 
+            // Initialize variables to track the best tour and its distance
             double bestDistance = INF;
             List<Integer> bestTour = null;
             int bestStartCity = -1;
 
-            // Computation time begins
+            // Record the start time of the computation for performance measurement
             long startTime = System.nanoTime();
 
-            // Tour optimization from each city
+            // Attempt to optimize the tour starting from each city
             for (int startCity = 0; startCity < n; startCity++) {
+                // Generate a tour using the nearest neighbor heuristic from the start city
                 List<Integer> tour = nearestNeighbor(distanceMatrix, startCity);
+                // Calculate the total distance of the generated tour
                 double tourDistance = calculateTourDistance(distanceMatrix, tour);
 
+                // Print the tour and its distance starting from the given city
                 System.out.println("\nTour Starting from " + cityNames.get(startCity) + ":");
                 printTourWithCityNames(tour, cityNames);
                 System.out.println("Distance: " + String.format("%.2f", tourDistance));
 
-                // Update the best tour if this one is better
+                // Update the best tour if the current tour is shorter
                 if (tourDistance < bestDistance) {
                     bestDistance = tourDistance;
                     bestTour = tour;
@@ -207,21 +212,21 @@ public class NearestNeighborTSP1 {
                 }
             }
 
-            // Computation time ends
+            // Record the end time of the computation
             long endTime = System.nanoTime();
 
-            // Elapsed time in milliseconds
+            // Calculate the elapsed time in milliseconds
             double elapsedTime = (endTime - startTime) / 1_000_000.0;
 
-            // Best overall tour
+            // Print the best tour found and its distance
             System.out.println("\nBest Tour Starting from " + cityNames.get(bestStartCity) + ":");
             printTourWithCityNames(bestTour, cityNames);
             System.out.println("Best Distance: " + String.format("%.2f", bestDistance));
 
-            // Time taken to calculate
+            // Print the total computation time
             System.out.printf("\nComputation Time: %.2f milliseconds\n", elapsedTime);
 
-            // Hardware + Software declaration
+            // Print information about the operating system and Java environment
             System.out.println("\nOperating System: " + System.getProperty("os.name"));
             System.out.println("OS Version: " + System.getProperty("os.version"));
             System.out.println("OS Architecture: " + System.getProperty("os.arch"));
@@ -229,6 +234,7 @@ public class NearestNeighborTSP1 {
             System.out.println("Java Version: " + System.getProperty("java.version"));
             System.out.println("Java Vendor: " + System.getProperty("java.vendor"));
         } catch (IOException e) {
+            // Print an error message if there's an issue reading the CSV file
             System.err.println("Error reading the CSV file: " + e.getMessage());
         }
     }

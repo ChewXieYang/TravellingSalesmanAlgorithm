@@ -3,7 +3,7 @@ import java.util.*;
 
 public class LinKernighanTSP {
     private static final double INF = Double.MAX_VALUE;
-    private static final int MAX_CITIES = 50; // Change this to your desired limit
+    private static final int MAX_CITIES = 50; // Change this to your desired limit  
 
     // CSV file reader. Returns distance matrix and city names, limited to MAX_CITIES
     public static Map<String, Object> readCSV(String filePath) throws IOException {
