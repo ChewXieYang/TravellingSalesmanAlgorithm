@@ -123,34 +123,38 @@ public class NearestNeighborTSP1 {
         return Math.round(value * 100.0) / 100.0;
     }
 
-    // Nearest Neighbor Algorithm
+    // Nearest Neighbor Algorithm for solving the Traveling Salesman Problem
     public static List<Integer> nearestNeighbor(double[][] distanceMatrix, int startCity) {
-        int n = distanceMatrix.length;
-        List<Integer> tour = new ArrayList<>();
-        boolean[] visited = new boolean[n];
-        int currentCity = startCity;
+        int n = distanceMatrix.length; // Number of cities
+        List<Integer> tour = new ArrayList<>(); // List to store the tour (order of cities visited)
+        boolean[] visited = new boolean[n]; // Array to track visited cities
+        int currentCity = startCity; // Start the tour at the specified start city
 
+        // Mark the start city as visited and add it to the tour
         visited[currentCity] = true;
         tour.add(currentCity);
 
+        // Loop to visit all cities
         for (int i = 1; i < n; i++) {
-            double nearestDistance = INF;
-            int nearestCity = -1;
+            double nearestDistance = INF; // Initialize nearest distance to infinity
+            int nearestCity = -1; // Initialize nearest city index to -1 (undefined)
 
             // Find the nearest unvisited city
             for (int j = 0; j < n; j++) {
+                // If city 'j' is unvisited and its distance from current city is less than the nearest distance
                 if (!visited[j] && distanceMatrix[currentCity][j] < nearestDistance) {
-                    nearestDistance = distanceMatrix[currentCity][j];
-                    nearestCity = j;
+                    nearestDistance = distanceMatrix[currentCity][j]; // Update nearest distance
+                    nearestCity = j; // Update nearest city index
                 }
             }
 
+            // Mark the nearest city as visited and add it to the tour
             visited[nearestCity] = true;
             tour.add(nearestCity);
-            currentCity = nearestCity;
+            currentCity = nearestCity; // Update the current city to the nearest city
         }
 
-        return tour;
+        return tour; // Return the completed tour
     }
 
     // Prints tour with city names
