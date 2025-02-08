@@ -1,4 +1,5 @@
 import csv
+import random
 import math
 import time
 import platform
@@ -88,9 +89,29 @@ def main():
     file_path = "DistanceBetweenEuropeanCities.csv"
 
     try:
-        city_names, distance_matrix = read_csv(file_path)
-        n = len(distance_matrix)
+        city_names, full_distance_matrix = read_csv(file_path)
+        total_cities = len(city_names)
 
+        # Ask the user for the number of cities
+        while True:
+            try:
+                num_cities = int(input(f"Enter the number of cities to use (2-{min(50, total_cities)}): "))
+                if 2 <= num_cities <= min(50, total_cities):
+                    break
+                else:
+                    print(f"Please enter a valid number between 2 and {min(50, total_cities)}.")
+            except ValueError:
+                print("Invalid input. Please enter an integer.")
+
+        # Select a subset of cities
+        selected_indices = sorted(random.sample(range(total_cities), num_cities))
+        selected_city_names = [city_names[i] for i in selected_indices]
+
+        # Create a reduced distance matrix
+        distance_matrix = [[full_distance_matrix[i][j] for j in selected_indices] for i in selected_indices]
+
+        # Run the Nearest Neighbor Algorithm
+        n = len(distance_matrix)
         best_distance = INF
         best_tour = None
         best_start_city = -1
@@ -101,8 +122,8 @@ def main():
             tour = nearest_neighbor(distance_matrix, start_city)
             tour_distance = calculate_tour_distance(distance_matrix, tour)
 
-            print(f"\nTour Starting from {city_names[start_city]}:")
-            print_tour_with_city_names(tour, city_names)
+            print(f"\nTour Starting from {selected_city_names[start_city]}:")
+            print_tour_with_city_names(tour, selected_city_names)
             print(f"Distance: {tour_distance:.2f} km")
 
             if tour_distance < best_distance:
@@ -113,8 +134,8 @@ def main():
         end_time = time.time()
         elapsed_time = (end_time - start_time) * 1000
 
-        print(f"\nBest Tour Starting from {city_names[best_start_city]}:")
-        print_tour_with_city_names(best_tour, city_names)
+        print(f"\nBest Tour Starting from {selected_city_names[best_start_city]}:")
+        print_tour_with_city_names(best_tour, selected_city_names)
         print(f"Best Distance: {best_distance:.2f} km")
 
         print(f"\nComputation Time: {elapsed_time:.2f} milliseconds")
@@ -129,3 +150,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+
