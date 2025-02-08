@@ -5,6 +5,9 @@ public class NearestNeighborTSP1 {
     private static final double INF = Double.MAX_VALUE;
 
     // Reads a CSV file and returns city names and a distance matrix limited by maxCities
+    // The CSV file should have a header with columns City1, City2, Distance(km)
+    // The file is read twice: first to get the list of city names and their indices,
+    // and second to fill in the distance matrix with the distances read from the file
     public static Map<String, Object> readCSV(String filePath, int maxCities) throws IOException {
         // List to store city names
         List<String> cityNames = new ArrayList<>();
