@@ -1,0 +1,45 @@
+Myra 
+
+line 11- 90
+
+
+This Java method readCSV reads a CSV file containing city pairs and distances, and returns a map with two entries: a list of city names and a distance matrix. 
+
+The method limits the number of cities to maxCities and assumes the CSV file has a header with columns "City1", "City2", and "Distance(km)". It reads the file twice: once to extract city names and their indices, and again to fill in the distance matrix. The distance matrix is symmetric, meaning the distance from city A to city B is the same as from city B to city A.
+
+line 102-113
+
+This Java method calculates the total distance of a tour (a sequence of cities) by summing the distances between consecutive cities and adding the distance from the last city back to the first city, then rounds the result to two decimal places.
+
+
+Line 120 -145
+
+This Java method implements the Nearest Neighbor algorithm to solve the Traveling Salesman Problem (TSP). It takes a distance matrix and a starting city as input and returns a tour (a list of city indices) that visits each city exactly once and returns to the starting city.
+
+Here's a succinct explanation:
+
+Initialize a tour with the starting city.
+For each remaining city:
+ a. Find the nearest unvisited city to the current city. 
+ b. Add the nearest city to the tour. 
+ c. Mark the nearest city as visited.
+Return the completed tour.
+Note: INF is likely a constant representing infinity, used to initialize the nearestDistance variable.
+
+Line 154- 165
+
+This Java method prints a tour of cities in a specific order, with each city name followed by an arrow (->) and a space, and the last city connected back to the first city to complete the loop.
+
+Line 166 - 244
+
+This Java code is the main entry point of a program that solves the Traveling Salesman Problem (TSP) using the Nearest Neighbor algorithm. Here's a succinct explanation:
+
+The program reads a CSV file containing distances between cities and prompts the user to enter the maximum number of cities to process (up to 50).
+
+It validates the user input and exits if it's invalid.
+The program reads the CSV file and extracts the city names and distance matrix.
+It iterates over each city as a potential starting point and generates a tour using the Nearest Neighbor algorithm.
+For each tour, it calculates the total distance and prints the tour and its distance.
+The program keeps track of the best tour (i.e., the one with the shortest distance) and prints it at the end.
+It also measures the computation time and prints system and Java environment information.
+In summary, this code solves the TSP using the Nearest Neighbor algorithm and provides a simple command-line interface for the user to input the maximum number of cities to process.

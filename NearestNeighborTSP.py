@@ -9,6 +9,17 @@ INF = float('inf')
 def read_csv(file_path):
     """
     Reads the CSV file and constructs a distance matrix and city names list.
+
+    The CSV file is expected to have the following format:
+    City1,City2,Distance(km)
+    CityName1,CityName2,DistanceInKilometers
+    CityName3,CityName4,DistanceInKilometers
+    ...
+
+    The function returns a tuple containing the city names list and the distance matrix.
+    The city names list is a list of strings, where each string is the name of a city.
+    The distance matrix is a 2D list of floats, where distance_matrix[i][j] is the distance in kilometers between city i and city j.
+    If there is no direct connection between city i and city j, then distance_matrix[i][j] is infinity.
     """
     city_names = []
     city_index_map = {}
@@ -21,20 +32,31 @@ def read_csv(file_path):
             raise ValueError("CSV file must have header: City1,City2,Distance(km)")
 
         for row in reader:
+            # For each row in the CSV file, extract the city names and the distance between them
             city1, city2, distance = row[0].strip(), row[1].strip(), float(row[2].strip())
+
+            # If city1 is not already in the city_index_map, add it and its index to the map
             if city1 not in city_index_map:
                 city_index_map[city1] = len(city_names)
                 city_names.append(city1)
+
+            # If city2 is not already in the city_index_map, add it and its index to the map
             if city2 not in city_index_map:
                 city_index_map[city2] = len(city_names)
                 city_names.append(city2)
+
+            # Add the edge between the two cities to the edges list
             edges.append((city1, city2, distance))
 
+    # Create a distance matrix with the same number of rows and columns as the number of cities
     n = len(city_names)
     distance_matrix = [[INF] * n for _ in range(n)]
+
+    # For each city, set the distance to itself to 0
     for i in range(n):
         distance_matrix[i][i] = 0
 
+    # For each edge, set the distance between the two cities to the given distance
     for city1, city2, distance in edges:
         index1 = city_index_map[city1]
         index2 = city_index_map[city2]
